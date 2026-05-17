@@ -8,9 +8,11 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type User struct {
-	ID        pgtype.UUID        `json:"id"`
-	Name      string             `json:"name"`
-	Email     string             `json:"email"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
+type Document struct {
+	ID         int32              `json:"id"`
+	Name       string             `json:"name"`
+	DataFormat string             `json:"data_format"`
+	Data       []byte             `json:"data"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 }

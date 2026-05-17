@@ -10,7 +10,7 @@ import (
 )
 
 func (c *Container) initializePostgres(ctx context.Context) error {
-	slog.Info("initializing postgres connection pool")
+	c.logger.Info("initializing postgres connection pool")
 
 	pg, err := pgx.Connect(ctx, c.cfg.DatabaseURL)
 	if err != nil {

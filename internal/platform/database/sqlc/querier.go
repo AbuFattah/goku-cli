@@ -6,15 +6,10 @@ package database
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
-	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	DeleteUser(ctx context.Context, id pgtype.UUID) error
-	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
-	ListUsers(ctx context.Context) ([]User, error)
+	SaveDocument(ctx context.Context, arg SaveDocumentParams) (Document, error)
 }
 
 var _ Querier = (*Queries)(nil)
