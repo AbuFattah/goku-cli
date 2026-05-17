@@ -1,0 +1,109 @@
+# ──────────────────────────────────────────────
+# Helm Chart Values — api-server
+# Override these in environment-specific files:
+#   helm upgrade api-server . -f values.prod.yaml
+# ──────────────────────────────────────────────
+
+replicaCount: 3
+
+image:
+  repository: myregistry.io/api-server
+  tag: "1.4.2"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - name: registry-credentials
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9090"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 2000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: [ALL]
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+  hosts:
+    - host: api.myapp.io
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: api-tls
+      hosts: [api.myapp.io]
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+env:
+  NODE_ENV: production
+  PORT: "8080"
+  LOG_LEVEL: info
+
+envFromSecret:
+  DB_PASSWORD:
+    secretName: db-credentials
+    secretKey: password
+  JWT_SECRET:
+    secretName: jwt-secret
+    secretKey: value
+
+probes:
+  readiness:
+    path: /health/ready
+    initialDelaySeconds: 10
+    periodSeconds: 5
+  liveness:
+    path: /health/live
+    initialDelaySeconds: 20
+    periodSeconds: 15
+
+nodeSelector: {}
+tolerations: []
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          topologyKey: kubernetes.io/hostname
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: api-server

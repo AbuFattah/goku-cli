@@ -1,0 +1,134 @@
+{
+  "affinity": {
+    "podAntiAffinity": {
+      "preferredDuringSchedulingIgnoredDuringExecution": [
+        {
+          "podAffinityTerm": {
+            "labelSelector": {
+              "matchLabels": {
+                "app.kubernetes.io/name": "api-server"
+              }
+            },
+            "topologyKey": "kubernetes.io/hostname"
+          },
+          "weight": 100
+        }
+      ]
+    }
+  },
+  "autoscaling": {
+    "enabled": true,
+    "maxReplicas": 10,
+    "minReplicas": 3,
+    "targetCPUUtilizationPercentage": 70,
+    "targetMemoryUtilizationPercentage": 80
+  },
+  "env": {
+    "LOG_LEVEL": "info",
+    "NODE_ENV": "production",
+    "PORT": "8080"
+  },
+  "envFromSecret": {
+    "DB_PASSWORD": {
+      "secretKey": "password",
+      "secretName": "db-credentials"
+    },
+    "JWT_SECRET": {
+      "secretKey": "value",
+      "secretName": "jwt-secret"
+    }
+  },
+  "fullnameOverride": "",
+  "image": {
+    "pullPolicy": "IfNotPresent",
+    "repository": "myregistry.io/api-server",
+    "tag": "1.4.2"
+  },
+  "imagePullSecrets": [
+    {
+      "name": "registry-credentials"
+    }
+  ],
+  "ingress": {
+    "annotations": {
+      "cert-manager.io/cluster-issuer": "letsencrypt-prod",
+      "nginx.ingress.kubernetes.io/rate-limit": "100"
+    },
+    "className": "nginx",
+    "enabled": true,
+    "hosts": [
+      {
+        "host": "api.myapp.io",
+        "paths": [
+          {
+            "path": "/",
+            "pathType": "Prefix"
+          }
+        ]
+      }
+    ],
+    "tls": [
+      {
+        "hosts": [
+          "api.myapp.io"
+        ],
+        "secretName": "api-tls"
+      }
+    ]
+  },
+  "nameOverride": "",
+  "nodeSelector": {},
+  "podAnnotations": {
+    "prometheus.io/path": "/metrics",
+    "prometheus.io/port": "9090",
+    "prometheus.io/scrape": "true"
+  },
+  "podSecurityContext": {
+    "fsGroup": 2000,
+    "runAsNonRoot": true,
+    "runAsUser": 1000
+  },
+  "probes": {
+    "liveness": {
+      "initialDelaySeconds": 20,
+      "path": "/health/live",
+      "periodSeconds": 15
+    },
+    "readiness": {
+      "initialDelaySeconds": 10,
+      "path": "/health/ready",
+      "periodSeconds": 5
+    }
+  },
+  "replicaCount": 3,
+  "resources": {
+    "limits": {
+      "cpu": "500m",
+      "memory": "512Mi"
+    },
+    "requests": {
+      "cpu": "250m",
+      "memory": "256Mi"
+    }
+  },
+  "securityContext": {
+    "allowPrivilegeEscalation": false,
+    "capabilities": {
+      "drop": [
+        "ALL"
+      ]
+    },
+    "readOnlyRootFilesystem": true
+  },
+  "service": {
+    "port": 80,
+    "targetPort": 8080,
+    "type": "ClusterIP"
+  },
+  "serviceAccount": {
+    "annotations": {},
+    "create": true,
+    "name": ""
+  },
+  "tolerations": []
+}
