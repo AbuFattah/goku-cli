@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/abufattah/goku-cli/config"
 	"github.com/abufattah/goku-cli/internal/platform/fileutil"
 	"github.com/spf13/cobra"
 )
 
-func NewRootCommand(cfg *config.Config, initPostgres func(ctx context.Context) error) *cobra.Command {
+func NewRootCommand(initPostgres func(ctx context.Context) error) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "goku",
 		Short: "A Go CLI for file conversion",
@@ -22,7 +21,7 @@ func NewRootCommand(cfg *config.Config, initPostgres func(ctx context.Context) e
 				return cmd.Help()
 			}
 
-			if err := validateFilepathFlags(input, output); err != nil {
+			if err := fileutil.ValidateFilepathFlags(input, output); err != nil {
 				return err
 			}
 
@@ -42,19 +41,19 @@ func ExecuteConversion(input, output string) error {
 		return err
 	}
 
-	inputFormat, err := DetectFormat(input)
+	inputFormat, err := fileutil.DetectFormat(input)
 	if err != nil {
 		return fmt.Errorf("input: %w", err)
 	}
 
-	outFormat, err := DetectFormat(output)
+	outFormat, err := fileutil.DetectFormat(output)
 	if err != nil {
 		return fmt.Errorf("output: %w", err)
 	}
 
 	outData, err := Convert(inputData, inputFormat, outFormat)
 	if err != nil {
-		return fmt.Errorf("converting %s → %s: %w", inputFormat, outFormat, err)
+		return fmt.Errorf("converting %s -> %s: %w", inputFormat, outFormat, err)
 	}
 
 	return fileutil.Write(output, outData)
