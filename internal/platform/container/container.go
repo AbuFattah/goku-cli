@@ -9,12 +9,12 @@ import (
 	"github.com/abufattah/goku-cli/config"
 	"github.com/abufattah/goku-cli/internal/cli/root"
 	database "github.com/abufattah/goku-cli/internal/platform/database/sqlc"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5"
 )
 
 type Container struct {
 	cfg      *config.Config
-	postgres *pgxpool.Pool
+	postgres *pgx.Conn
 	Queries  *database.Queries
 	logger   *slog.Logger
 }
@@ -33,11 +33,7 @@ func (c *Container) Run(ctx context.Context) error {
 	c.logger = newLogger(cfg.LogLevel)
 	c.logger.Info("starting application", "env", cfg.AppEnv)
 
-	if err := c.initializePostgres(ctx); err != nil {
-		return fmt.Errorf("initializing postgres: %w", err)
-	}
-
-	rootCmd := root.NewRootCommand(cfg)
+	rootCmd := root.NewRootCommand(cfg, c.initializePostgres)
 
 	return rootCmd.ExecuteContext(ctx)
 }
@@ -47,7 +43,7 @@ func (c *Container) Close() {
 		c.logger.Info("shutting down application")
 	}
 	if c.postgres != nil {
-		c.postgres.Close()
+		c.postgres.Close(context.Background())
 	}
 }
 

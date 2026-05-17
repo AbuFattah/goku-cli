@@ -1,6 +1,7 @@
 package root
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/abufattah/goku-cli/config"
@@ -8,19 +9,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewRootCommand(cfg *config.Config) *cobra.Command {
+func NewRootCommand(cfg *config.Config, initPostgres func(ctx context.Context) error) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "goku",
 		Short: "A Go CLI for file conversion",
 		Long:  `A Go CLI for file conversion`,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			input, _ := cmd.Flags().GetString("input")
-			output, _ := cmd.Flags().GetString("output")
-			return validateFilepathFlags(input, output)
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			input, _ := cmd.Flags().GetString("input")
 			output, _ := cmd.Flags().GetString("output")
+
+			if input == "" && output == "" {
+				return cmd.Help()
+			}
+
+			if err := validateFilepathFlags(input, output); err != nil {
+				return err
+			}
+
 			return ExecuteConversion(input, output)
 		},
 	}

@@ -9,7 +9,7 @@ import (
 type Config struct {
 	DatabaseURL string `env:"DATABASE_URL" envDefault:"postgres://postgres:postgres@localhost:5448/goku?sslmode=disable"`
 	AppEnv      string `env:"APP_ENV" envDefault:"development"`
-	LogLevel    string `env:"LOG_LEVEL" envDefault:"info"`
+	LogLevel    string `env:"LOG_LEVEL" envDefault:"error"`
 }
 
 func Load() (*Config, error) {

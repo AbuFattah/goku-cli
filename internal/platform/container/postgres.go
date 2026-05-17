@@ -4,47 +4,30 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"time"
 
 	database "github.com/abufattah/goku-cli/internal/platform/database/sqlc"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5"
 )
 
 func (c *Container) initializePostgres(ctx context.Context) error {
 	slog.Info("initializing postgres connection pool")
 
-	config, err := pgxpool.ParseConfig(c.cfg.DatabaseURL)
+	pg, err := pgx.Connect(ctx, c.cfg.DatabaseURL)
 	if err != nil {
-		slog.Error("failed to parse database configuration", "error", err)
-		return fmt.Errorf("failed to parse database configuration: %w", err)
+		slog.Error("failed to connect to postgres database", "error", err)
+		return fmt.Errorf("failed to connect to postgres database: %w", err)
 	}
 
-	config.MaxConns = 30
-	config.MinConns = 15
-	config.MaxConnLifetime = 20 * time.Minute
-	config.MaxConnIdleTime = 10 * time.Minute
-
-	pgPool, err := pgxpool.NewWithConfig(ctx, config)
-	if err != nil {
-		slog.Error("failed to create postgres connection pool", "error", err)
-		return fmt.Errorf("failed to create postgres connection pool: %w", err)
-	}
-
-	if err := pgPool.Ping(ctx); err != nil {
+	if err := pg.Ping(ctx); err != nil {
 		slog.Error("failed to ping postgres database", "error", err)
-		pgPool.Close()
+		pg.Close(ctx)
 		return fmt.Errorf("failed to ping postgres database: %w", err)
 	}
 
-	c.postgres = pgPool
-	c.Queries = database.New(pgPool)
+	c.postgres = pg
+	c.Queries = database.New(pg)
 
-	c.logger.Info("Database connection pool configured successfully",
-		slog.Int("maxConns", int(config.MaxConns)),
-		slog.Int("minConns", int(config.MinConns)),
-		slog.Duration("maxConnLifetime", config.MaxConnLifetime),
-		slog.Duration("maxConnIdleTime", config.MaxConnIdleTime),
-	)
+	c.logger.Info("Database connected successfully")
 
 	return nil
 }
