@@ -40,16 +40,5 @@ func validateFilepathFlags(input, output string) error {
 		return fmt.Errorf("input and output formats should be different")
 	}
 
-	outDir := filepath.Dir(output)
-	if _, err := os.Stat(outDir); os.IsNotExist(err) {
-		return fmt.Errorf("output directory does not exist: %s", outDir)
-	}
-
-	absIn, _ := filepath.Abs(input)
-	absOut, _ := filepath.Abs(output)
-	if absIn == absOut {
-		return fmt.Errorf("input and output paths must be different")
-	}
-
 	return nil
 }
