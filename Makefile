@@ -1,16 +1,22 @@
-.PHONY: build run migrate-up migrate-down sqlc-gen lint test tidy docker-up docker-down
+DB_URL = postgres://postgres:postgres@localhost:5448/goku?sslmode=disable
+MIGRATIONS_PATH = internal/platform/database/migrations
+
+.PHONY: build run migrateup migratedown sqlc-gen lint test tidy docker-up docker-down
 
 build:
 	go build -o bin/app/goku ./cmd/...
 
+buildcmd:
+	go build -o /usr/local/bin/goku ./cmd/...
+	
 run:
 	go run ./cmd/...
 
 migrateup:
-	migrate -path platform/database/migrations -database "postgres://postgres:postgres@localhost:5448/goku?sslmode=disable" -verbose up
+	migrate -path $(MIGRATIONS_PATH) -database $(DB_URL) -verbose up
 
-migrate-down:
-	go run ./cmd/... migrate down
+migratedown:
+	go run ./cmd/... migrate -verbose down
 
 sqlc-gen:
 	sqlc generate
